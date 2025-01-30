@@ -3,7 +3,7 @@ import 'server-only';
 import type { SessionPayload } from '@/app/auth/definitions';
 import { decodeJwt, jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { redirect } from 'next/dist/client/components/navigation.react-server';
 
 const secret = new TextEncoder().encode(process.env.SECRET);
 const decodeJWT: (token: string) => any = (token: string) => {
@@ -35,46 +35,36 @@ export async function decrypt(session: string | undefined = '') {
   }
 }
 
-export async function createSession(token: string | undefined = '') {
-  if (!token) {
-    throw new Error('Token is required to create a session');
-  }
-
+export async function createSession(token: string) {
   const decodedToken = await decodeJWT(token);
-  if (!decodedToken || !decodedToken.id) {
-    throw new Error('No user ID found in the token');
-  }
-
   const userId = decodedToken.id;
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+  const session = await encrypt({ token, userId, expiresAt });
 
-  try {
-    const session = await encrypt({ token, userId, expiresAt });
+  cookies().set('session', session, {
+    httpOnly: true,
+    secure: true,
+    expires: expiresAt,
+    sameSite: 'lax',
+    path: '/',
+  });
 
-    cookies().set('session', session, {
-      httpOnly: true,
-      secure: true,
-      expires: expiresAt,
-      sameSite: 'lax',
-      path: '/',
-    });
-
-    redirect('/profile');
-  } catch (error) {
-    console.error('Failed to create session:', error);
-    throw new Error('Failed to encrypt session');
-  }
+  redirect('/profile');
 }
 
 export async function verifySession() {
   const cookie = cookies().get('session')?.value;
   const session = await decrypt(cookie);
-  
+
   if (!session?.userId) {
     redirect('/login');
   }
 
-  return { isAuth: true, userId: String(session.userId) , token: String(session.token) };
+  return {
+    isAuth: true,
+    userId: String(session.userId),
+    token: String(session.token),
+  };
 }
 
 export async function updateSession() {

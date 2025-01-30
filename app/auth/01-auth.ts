@@ -42,11 +42,11 @@ export async function register(
   const data = await response.json();
 
   if (data.message !== 'User has been created successfully') {
-     return {
-       message: data.message,
-     };
-    }
- 
+    return {
+      message: data.message,
+    };
+  }
+
   redirect('/login');
 }
 
@@ -56,52 +56,36 @@ export async function login(
 ): Promise<FormState> {
   const errorMessage = { message: 'Invalid login credentials.' };
 
-  try {
-    // 1. Validate form fields
-    const validatedFields = LoginFormSchema.safeParse({ 
-      emailOrUsername: formData.get('emailOrUsername'),
-      password: formData.get('password'),
-    });
+  // 1. Validate form fields
+  const validatedFields = LoginFormSchema.safeParse({
+    emailOrUsername: formData.get('emailOrUsername'),
+    password: formData.get('password'),
+  });
 
-    // If any form fields are invalid, return early
-    if (!validatedFields.success) {
-      return {
-        errors: validatedFields.error.flatten().fieldErrors,
-      };
-    }
+  // If any form fields are invalid, return early
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/login`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: validatedFields.data.emailOrUsername,
-          username: validatedFields.data.emailOrUsername,
-          password: validatedFields.data.password,
-        }),
-      }
-    );
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: validatedFields.data.emailOrUsername,
+      username: validatedFields.data.emailOrUsername,
+      password: validatedFields.data.password,
+    }),
+  });
 
-    if (!response.ok) {
-      return errorMessage;
-    }
-
-    const result = await response.json();
-    if (!result.access_token) {
-      return errorMessage;
-    }
-
-    // TODO: Create The Session For Authenticated User.
-    const session = await createSession(
-      result.access_token,
-    );
-  } catch (error) {
-    console.error('Failed to login', error);
+  const result = await response.json();
+  if (!result?.access_token) {
     return errorMessage;
   }
+  await createSession(result?.access_token);
 }
 
 export async function logout() {

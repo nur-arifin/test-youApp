@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { TbZodiacVirgo } from "react-icons/tb";
 
 interface HeaderPageProps {
@@ -13,11 +14,7 @@ const HeaderPage = ({ user }: HeaderPageProps) => {
   return (
     <div>
       <div className="gradient-img relative h-60 w-full overflow-hidden rounded-md md:h-80 lg:h-96">
-        <img
-          src="https://cbeditz.com/public/cbeditz/preview/alone-boy-city-road-background-hd-download-116457869335bdfirwzjf.jpg"
-          alt="Image"
-          className="h-full w-full object-cover"
-        />
+        <Image fill className="object-cover" src="/bg.jpg" alt="Image"/>
         <div className="absolute bottom-0 left-0 bg-opacity-50 p-4 text-white">
           <h2 className="text-lg font-bold">{user?.username}</h2>
           <p className="text-sm">{user?.name}</p>

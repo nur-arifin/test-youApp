@@ -22,7 +22,7 @@ export function LoginForm() {
             name="emailOrUsername"
             value={emailOrUsername}
             onChange={(e) => setemailOrUsername(e.target.value)}
-            placeholder="Enter Username/Email"
+            placeholder="Enter Email"
             type="text"
           />
           {state?.errors?.emailOrUsername && (

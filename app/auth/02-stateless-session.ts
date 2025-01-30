@@ -37,30 +37,33 @@ export async function decrypt(session: string | undefined = '') {
 
 export async function createSession(token: string | undefined = '') {
   if (!token) {
-    throw new Error('No token provided');
+    throw new Error('Token is required to create a session');
   }
 
   const decodedToken = await decodeJWT(token);
-  if (!decodedToken?.id) {
+  if (!decodedToken || !decodedToken.id) {
     throw new Error('No user ID found in the token');
   }
 
   const userId = decodedToken.id;
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-  const session = await encrypt({ token,userId, expiresAt });
 
-  if (!session) {
+  try {
+    const session = await encrypt({ token, userId, expiresAt });
+
+    cookies().set('session', session, {
+      httpOnly: true,
+      secure: true,
+      expires: expiresAt,
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    redirect('/profile');
+  } catch (error) {
+    console.error('Failed to create session:', error);
     throw new Error('Failed to encrypt session');
   }
-
-  cookies().set('session', session, {
-    httpOnly: true,
-    secure: true,
-    expires: expiresAt,
-    sameSite: 'lax',
-    path: '/',
-  });
-  redirect('/profile');
 }
 
 export async function verifySession() {
